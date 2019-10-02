@@ -85,7 +85,6 @@ end
 def run_rubocop
   annotations = []
   errors = JSON.parse(rubocop_output)
-  conclusion = "success"
   count = 0
 
   errors["files"].each do |file|
@@ -99,10 +98,6 @@ def run_rubocop
       annotation_level = @annotation_levels[severity]
       count = count + 1
 
-      if annotation_level == "failure"
-        conclusion = "failure"
-      end
-
       annotations.push({
                          "path" => path,
                          "start_line" => location["start_line"],
@@ -112,6 +107,9 @@ def run_rubocop
                        })
     end
   end
+
+  # Return a failure even if there are warning offenses
+  conclusion = count > 0 ? "failure" : "success"
 
   output = {
     "title": @check_name,
