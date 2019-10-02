@@ -113,9 +113,12 @@ def run_rubocop
 
   output = {
     "title": @check_name,
-    "summary": "#{count} offense(s) found",
-    "annotations" => annotations
+    "summary": "#{count} offense(s) found"
   }
+
+   # The Checks API limits the number of annotations to a maximum of 50 per API request.
+   # https://developer.github.com/v3/checks/runs/#output-object-1
+   output[:annotations] = annotations unless count > 50
 
   return { "output" => output, "conclusion" => conclusion }
 end
