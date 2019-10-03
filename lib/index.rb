@@ -12,7 +12,7 @@ require 'time'
 @owner = @repository["owner"]["login"]
 @repo = @repository["name"]
 
-@check_name = "Rubocop"
+@check_name = "Linter"
 
 @headers = {
   "Content-Type": 'application/json',
@@ -45,9 +45,6 @@ end
 
 def update_check(id, conclusion, output)
   body = {
-    "name" => @check_name,
-    "head_sha" => @GITHUB_SHA,
-    "status" => 'completed',
     "completed_at" => Time.now.iso8601,
     "conclusion" => conclusion,
     "output" => output
@@ -112,13 +109,26 @@ def run_rubocop
   conclusion = count > 0 ? "failure" : "success"
 
   output = {
-    "title": @check_name,
+    "title": "Results",
     "summary": "#{count} offense(s) found"
   }
 
    # The Checks API limits the number of annotations to a maximum of 50 per API request.
    # https://developer.github.com/v3/checks/runs/#output-object-1
    output[:annotations] = annotations unless count > 50
+
+   # Add some output so it's visable when drilling into the check
+   puts "-----------------------------------------------------------------------"
+   puts " Result: #{conclusion}"
+   puts "-----------------------------------------------------------------------"
+   annotations.group_by { |a| a["annotation_level"] }.each do |level, level_annotations|
+     puts " #{level}"
+     puts "-----------------------------------------------------------------------"
+     level_annotations.each do |annotation|
+       puts annotation["path"]
+       puts "  -> #{annotation["message"]}"
+     end
+   end
 
   return { "output" => output, "conclusion" => conclusion }
 end
